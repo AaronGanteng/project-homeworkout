@@ -6,7 +6,7 @@ import 'package:homeworkout/pages/home_page.dart';
 import 'package:homeworkout/pages/starting_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
-import 'exercise_model.dart';
+import 'models/exercise_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class MyHttpOverrides extends HttpOverrides {
