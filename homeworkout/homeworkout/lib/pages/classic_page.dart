@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:homeworkout/pages/workout_detail_page.dart';
+import '../models/workout_model.dart';
+import '../services/workout_service.dart';
 
 class ClassicPage extends StatefulWidget {
   const ClassicPage({super.key});
@@ -9,6 +12,7 @@ class ClassicPage extends StatefulWidget {
 
 class _ClassicPageState extends State<ClassicPage> {
   String _selectedWorkoutCategory = 'Shoulder & Back';
+  String _searchQuery = "";
   final List<String> _workoutCategories = [
     'Shoulder & Back',
     'Chest',
@@ -16,6 +20,16 @@ class _ClassicPageState extends State<ClassicPage> {
     'Full Body',
     'Legs',
   ];
+  final WorkoutService _workoutService = WorkoutService();
+
+  // Mapping dari kategori UI ke bodyParts di data
+  final Map<String, List<String>> _categoryMapping = {
+    'Shoulder & Back': ['SHOULDERS', 'BACK'],
+    'Chest': ['CHEST'],
+    'Arm': ['UPPER ARMS', 'BICEPS', 'TRICEPS'],
+    'Full Body': ['FULL BODY'],
+    'Legs': ['QUADRICEPS', 'THIGHS', 'CALVES'],
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +73,7 @@ class _ClassicPageState extends State<ClassicPage> {
                     ),
                   ),
                   _buildWorkoutCategoryFilter(),
+                  _buildSearchBar(),
                   _buildWorkoutList(),
                 ],
               ),
@@ -69,14 +84,12 @@ class _ClassicPageState extends State<ClassicPage> {
     );
   }
 
-  // Widget untuk Navbar Kustom (Judul & Search)
   Widget _buildCustomNavbar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Judul Aplikasi
           const Text(
             'Home Workout',
             style: TextStyle(
@@ -86,7 +99,6 @@ class _ClassicPageState extends State<ClassicPage> {
             ),
           ),
           const SizedBox(height: 16),
-          // Search Bar
           TextField(
             decoration: InputDecoration(
               hintText: 'Search workouts, plans...',
@@ -105,7 +117,6 @@ class _ClassicPageState extends State<ClassicPage> {
     );
   }
 
-  // Widget untuk Judul Bagian (e.g., "Classic Plan" dan "See All")
   Widget _buildSectionTitle(String title, String? actionText) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -124,7 +135,7 @@ class _ClassicPageState extends State<ClassicPage> {
             Text(
               actionText,
               style: const TextStyle(
-                color: Colors.blueAccent, // Sesuai tema "biru putih"
+                color: Colors.blueAccent,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -134,20 +145,16 @@ class _ClassicPageState extends State<ClassicPage> {
     );
   }
 
-  // Widget untuk daftar "Classic Plan" (Horizontal Scroll)
   Widget _buildClassicPlanList() {
-    // Tinggi kartu
     double cardHeight = 220;
 
     return Container(
       height: cardHeight,
-      // Kita pakai ListView.builder agar efisien
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 16.0, right: 8.0),
-        itemCount: 5, // Data tiruan: ada 3 plan
+        itemCount: 3,
         itemBuilder: (context, index) {
-          // Data tiruan untuk plan
           final mockData = [
             {
               'title': 'MASSIVE UPPER BODY',
@@ -169,24 +176,21 @@ class _ClassicPageState extends State<ClassicPage> {
             },
           ];
 
-          // Ini adalah kartu plan-nya
           return Card(
-            clipBehavior: Clip.antiAlias, // Untuk memotong gambar
+            clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
             margin: const EdgeInsets.only(right: 8.0),
             child: Container(
-              width: 300, // Lebar kartu
+              width: 300,
               height: cardHeight,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Gambar Latar Belakang
                   Image.network(
                     mockData[index]['image']!,
                     fit: BoxFit.cover,
-                    // Error builder untuk jika URL gambar gagal dimuat
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: Colors.grey[900],
                       child: const Icon(
@@ -195,7 +199,6 @@ class _ClassicPageState extends State<ClassicPage> {
                       ),
                     ),
                   ),
-                  // Gradient hitam di atas gambar agar teks terbaca
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -208,7 +211,6 @@ class _ClassicPageState extends State<ClassicPage> {
                       ),
                     ),
                   ),
-                  // Konten Teks di atas gambar
                   Positioned(
                     bottom: 16,
                     left: 16,
@@ -247,7 +249,7 @@ class _ClassicPageState extends State<ClassicPage> {
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: Colors.blueAccent[400], // Teks biru
+                            foregroundColor: Colors.blueAccent[400],
                           ),
                           child: const Text(
                             'Start',
@@ -266,7 +268,6 @@ class _ClassicPageState extends State<ClassicPage> {
     );
   }
 
-  // Widget untuk filter kategori (Horizontal Scroll)
   Widget _buildWorkoutCategoryFilter() {
     return Container(
       height: 40,
@@ -282,20 +283,20 @@ class _ClassicPageState extends State<ClassicPage> {
             padding: const EdgeInsets.only(right: 8.0),
             child: ChoiceChip(
               label: Text(category),
-              labelStyle: TextStyle(
+              labelStyle: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
               selected: isSelected,
               onSelected: (bool selected) {
-                // Mengganti state kategori yang dipilih
                 setState(() {
-                  _selectedWorkoutCategory = category;
+                  if (selected) {
+                    _selectedWorkoutCategory = category;
+                  }
                 });
               },
               backgroundColor: Colors.grey[900],
               selectedColor: Colors.blueAccent[400],
-              // Sesuai tema "biru putih"
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0),
               ),
@@ -307,91 +308,119 @@ class _ClassicPageState extends State<ClassicPage> {
     );
   }
 
-  // Widget untuk daftar latihan (Vertikal, berdasarkan filter)
   Widget _buildWorkoutList() {
-    // Data tiruan - idealnya ini difilter berdasarkan _selectedWorkoutCategory
-    final mockWorkouts = [
-      {
-        'title': '$_selectedWorkoutCategory - Beginner',
-        'mins': '15 mins',
-        'image': 'https://placehold.co/100x100/EEE/000?text=W1',
-      },
-      {
-        'title': '$_selectedWorkoutCategory - Intermediate',
-        'mins': '25 mins',
-        'image': 'https://placehold.co/100x100/EEE/000?text=W2',
-      },
-      {
-        'title': '$_selectedWorkoutCategory - Advanced',
-        'mins': '30 mins',
-        'image': 'https://placehold.co/100x100/EEE/000?text=W3',
-      },
-      {
-        'title': '$_selectedWorkoutCategory - Pro',
-        'mins': '30 mins',
-        'image': 'https://placehold.co/100x100/EEE/000?text=W3',
-      },
-      {
-        'title': '$_selectedWorkoutCategory - Max',
-        'mins': '30 mins',
-        'image': 'https://placehold.co/100x100/EEE/000?text=W3',
-      },
-    ];
+    final targetBodyParts =
+        _categoryMapping[_selectedWorkoutCategory] ?? [];
 
-    return ListView.builder(
-      // Penting: 2 baris ini agar ListView di dalam SingleChildScrollView
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
+    final stream = _searchQuery.isNotEmpty
+        ? _workoutService.searchWorkouts(_searchQuery)
+        : _workoutService.getWorkoutsByBodyParts(targetBodyParts);
 
-      padding: const EdgeInsets.all(16.0),
-      itemCount: mockWorkouts.length,
-      itemBuilder: (context, index) {
-        final workout = mockWorkouts[index];
-        return Card(
-          color: Colors.grey[900],
-          elevation: 2,
-          shadowColor: Colors.grey[600],
-          margin: const EdgeInsets.only(bottom: 12.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(8.0),
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(12.0),
-              child: Image.network(
-                workout['image']!,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 60,
-                  height: 60,
-                  color: Colors.grey[800],
-                  child: const Icon(Icons.image, color: Colors.grey),
+    return StreamBuilder<List<Workout>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text(
+                "No workouts found",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          );
+        }
+
+        final workouts = snapshot.data!;
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          itemCount: workouts.length,
+          itemBuilder: (context, index) {
+            final workout = workouts[index];
+
+            return Card(
+              color: Colors.grey[900],
+              margin: const EdgeInsets.only(bottom: 12.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: ListTile(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          WorkoutDetailPage(workout: workout),
+                    ),
+                  );
+                },
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(12.0),
+                  child: Image.network(
+                    workout.imageUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                title: Text(
+                  workout.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                subtitle: Text(
+                  workout.bodyParts.join(', ').replaceAll('_', ' '),
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.blue,
                 ),
               ),
-            ),
-            title: Text(
-              workout['title']!,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            subtitle: Text(
-              workout['mins']!,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.blue,
-            ),
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: TextField(
+        onChanged: (value) {
+          setState(() => _searchQuery = value.toLowerCase());
+        },
+        decoration: InputDecoration(
+          hintText: "Search workouts...",
+          hintStyle: TextStyle(color: Colors.grey[500]),
+          filled: true,
+          fillColor: Colors.grey[900],
+          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        style: const TextStyle(color: Colors.white),
+      ),
     );
   }
 }

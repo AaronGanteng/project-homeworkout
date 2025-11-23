@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'workout_plan_event.dart';
+
 part 'workout_plan_state.dart';
 
 class WorkoutPlanBloc extends Bloc<WorkoutPlanEvent, WorkoutPlanState> {
@@ -12,24 +14,28 @@ class WorkoutPlanBloc extends Bloc<WorkoutPlanEvent, WorkoutPlanState> {
     on<LoadPlansEvent>(_onLoadPlans);
   }
 
-  void _onLoadPlans(LoadPlansEvent event, Emitter<WorkoutPlanState> emit) async {
+  void _onLoadPlans(
+    LoadPlansEvent event,
+    Emitter<WorkoutPlanState> emit,
+  ) async {
     // 1. Beri tahu UI bahwa kita sedang loading
     emit(PlansLoading());
 
     try {
       // 2. Simulasi mengambil data dari Firebase (butuh waktu 2 detik)
       // TODO: Ganti ini dengan kode Firebase Anda yang sebenarnya
-      await Future.delayed(const Duration(seconds: 2));
+      final snapshot = await FirebaseFirestore.instance
+          .collection('workout_plans')
+          .get();
 
       // (Di sinilah Anda akan memanggil:
-      //  final data = await _firebaseRepository.getWorkoutPlans(); )
+      final plans = snapshot.docs.map((doc) => doc.data()).toList();
 
       // 3. Jika berhasil, beri tahu UI bahwa data sudah siap (loaded)
-      emit(PlansLoaded(/* kirim data hasil fetch di sini jika perlu */));
-
+      emit(PlansLoaded(plans));
     } catch (e) {
       // 4. Jika gagal, beri tahu UI bahwa ada error
-      emit(PlansError("Gagal mengambil data dari server."));
+      emit(PlansError("Gagal mengambil data: $e."));
     }
   }
 }

@@ -5,9 +5,24 @@ import 'package:homeworkout/bloc/workout_plan_bloc.dart';
 import 'package:homeworkout/pages/home_page.dart';
 import 'package:homeworkout/pages/starting_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:homeworkout/seeder/seed_bodyparts.dart';
+import 'package:homeworkout/seeder/seed_equipment.dart';
 import 'package:http/http.dart' as http;
 import 'models/exercise_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:homeworkout/firestore/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:homeworkout/services/auth_service.dart';
+import 'package:homeworkout/seeder/seed_workouts.dart';
+Future<void> signInAnonymously() async {
+  try {
+    await FirebaseAuth.instance.signInAnonymously();
+    return print("User authenticated");
+  } catch (error) {
+    return print("Failed to authenticate: $error");
+  }
+}
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -18,8 +33,17 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   HttpOverrides.global = MyHttpOverrides();
+
+  // jalankan sekali saja jika ingin memasukkan data ke firabase database
+  // await WorkoutSeeder.uploadWorkouts();
+  // await EquipmentSeeder.uploadEquipments();
+  // await BodyPartsSeeder.uploadBodyParts();
+
+  await AuthService().signInAnonymously();
 
   runApp(const MyApp());
 }
@@ -35,7 +59,7 @@ class MyApp extends StatelessWidget {
         title: 'Home Workout App',
         theme: ThemeData(
           primarySwatch: Colors.blue,
-          brightness: Brightness.dark
+          brightness: Brightness.dark,
           // visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: const HomePage(),
