@@ -153,6 +153,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   // Widget untuk chip Body Part
   Widget _buildBodyPartChip(String label) {
+    // Pastikan nama file di folder assets sama persis dengan label!
+    // Contoh: "Shoulder" -> "assets/logos/Shoulder.png"
+    String imagePath = 'assets/logos/$label.png';
+
     return InkWell(
       onTap: () {
         /* Logika saat body part di-klik */
@@ -161,20 +165,23 @@ class _DiscoverPageState extends State<DiscoverPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleAvatar(
-            radius: 35,
-            backgroundColor: Colors.grey[900],
-            child: Image.asset(
-              'assets/images/Pushup.png',
-              width: 40,
-              height: 40,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(
-                  Icons.fitness_center,
-                  color: Colors.blue,
-                  size: 32,
-                );
-              },
+          ClipOval(
+            child: Container(
+              width: 70, // Diameter lingkaran (2 x radius 35)
+              height: 70,
+              color: Colors.grey[900], // Warna background jika gambar transparan/loading
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.cover, // <-- INI KUNCINYA (Supaya full cover)
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback jika gambar belum ada di assets
+                  return const Icon(
+                    Icons.fitness_center,
+                    color: Colors.blue,
+                    size: 32,
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -182,7 +189,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           Text(
             label,
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w900,
               fontSize: 12,
               color: Colors.white, // Teks putih
             ),

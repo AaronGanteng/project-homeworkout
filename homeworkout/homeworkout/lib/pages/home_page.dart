@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:homeworkout/pages/classic_page.dart';
 import 'package:homeworkout/pages/discover_page.dart';
+import 'package:homeworkout/pages/personal_page.dart';
 import 'package:homeworkout/pages/placeholder_tab.dart';
+import 'package:homeworkout/pages/profile_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,9 +18,9 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const ClassicPage(), // Halaman "Classic" (yang lama)
     const DiscoverPage(), // Halaman "Discover" (yang baru)
-    const PlaceholderTab(title: 'Personal'), // Halaman "Personal"
+    const PersonalPage(), // Halaman "Personal"
     const PlaceholderTab(title: 'Daily'), // Halaman "Daily"
-    const PlaceholderTab(title: 'Me'), // Halaman "Me"
+    const ProfilePage(), // Halaman "Me"
   ];
 
   @override

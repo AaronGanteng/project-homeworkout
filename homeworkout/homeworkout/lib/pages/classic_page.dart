@@ -73,7 +73,6 @@ class _ClassicPageState extends State<ClassicPage> {
                     ),
                   ),
                   _buildWorkoutCategoryFilter(),
-                  _buildSearchBar(),
                   _buildWorkoutList(),
                 ],
               ),
@@ -397,30 +396,6 @@ class _ClassicPageState extends State<ClassicPage> {
           },
         );
       },
-    );
-  }
-
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: TextField(
-        onChanged: (value) {
-          setState(() => _searchQuery = value.toLowerCase());
-        },
-        decoration: InputDecoration(
-          hintText: "Search workouts...",
-          hintStyle: TextStyle(color: Colors.grey[500]),
-          filled: true,
-          fillColor: Colors.grey[900],
-          prefixIcon: const Icon(Icons.search, color: Colors.white),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        style: const TextStyle(color: Colors.white),
-      ),
     );
   }
 }
