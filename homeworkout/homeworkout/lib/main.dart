@@ -7,6 +7,7 @@ import 'package:homeworkout/pages/starting_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:homeworkout/seeder/seed_bodyparts.dart';
 import 'package:homeworkout/seeder/seed_equipment.dart';
+import 'package:homeworkout/seeder/seed_workoutplan.dart';
 import 'package:http/http.dart' as http;
 import 'models/exercise_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -42,6 +43,7 @@ void main() async {
   // await WorkoutSeeder.uploadWorkouts();
   // await EquipmentSeeder.uploadEquipments();
   // await BodyPartsSeeder.uploadBodyParts();
+  // await seedWorkoutPlans();
 
   await AuthService().signInAnonymously();
 

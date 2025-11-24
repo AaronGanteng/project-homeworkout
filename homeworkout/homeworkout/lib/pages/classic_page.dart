@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:homeworkout/models/workoutplan_model.dart';
 import 'package:homeworkout/pages/workout_detail_page.dart';
+import 'package:homeworkout/services/workoutplan_service.dart';
 import '../models/workout_model.dart';
 import '../services/workout_service.dart';
 
@@ -11,9 +13,10 @@ class ClassicPage extends StatefulWidget {
 }
 
 class _ClassicPageState extends State<ClassicPage> {
-  String _selectedWorkoutCategory = 'Shoulder & Back';
+  String _selectedWorkoutCategory = 'All';
   String _searchQuery = "";
   final List<String> _workoutCategories = [
+    'All',
     'Shoulder & Back',
     'Chest',
     'Arm',
@@ -21,9 +24,12 @@ class _ClassicPageState extends State<ClassicPage> {
     'Legs',
   ];
   final WorkoutService _workoutService = WorkoutService();
+  final WorkoutPlanService _workoutPlanService = WorkoutPlanService();
+
 
   // Mapping dari kategori UI ke bodyParts di data
   final Map<String, List<String>> _categoryMapping = {
+    'All': [],
     'Shoulder & Back': ['SHOULDERS', 'BACK'],
     'Chest': ['CHEST'],
     'Arm': ['UPPER ARMS', 'BICEPS', 'TRICEPS'],
@@ -147,125 +153,119 @@ class _ClassicPageState extends State<ClassicPage> {
   Widget _buildClassicPlanList() {
     double cardHeight = 220;
 
-    return Container(
-      height: cardHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16.0, right: 8.0),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          final mockData = [
-            {
-              'title': 'MASSIVE UPPER BODY',
-              'days': '28 Days',
-              'desc': 'Sculpt your upper body and shred your abs...',
-              'image': 'https://placehold.co/300x220/0052CC/FFFFFF?text=Plan+1',
-            },
-            {
-              'title': 'BEGINNER SHRED',
-              'days': '30 Days',
-              'desc': 'Burn fat and build lean muscle...',
-              'image': 'https://placehold.co/300x220/003B95/FFFFFF?text=Plan+2',
-            },
-            {
-              'title': 'CORE STRENGTH',
-              'days': '14 Days',
-              'desc': 'Focus on your core and stability...',
-              'image': 'https://placehold.co/300x220/002A6C/FFFFFF?text=Plan+3',
-            },
-          ];
+    return FutureBuilder<List<WorkoutPlan>>(
+      future: WorkoutPlanService().getWorkoutPlans(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          return Card(
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            margin: const EdgeInsets.only(right: 8.0),
-            child: Container(
-              width: 300,
-              height: cardHeight,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    mockData[index]['image']!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[900],
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey,
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text("No workout plans available"));
+        }
+
+        final plans = snapshot.data!;
+
+        return SizedBox(
+          height: cardHeight,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(left: 16.0, right: 8.0),
+            itemCount: plans.length,
+            itemBuilder: (context, index) {
+              final plan = plans[index];
+
+              return Card(
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                margin: const EdgeInsets.only(right: 8.0),
+                child: Container(
+                  width: 300,
+                  height: cardHeight,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        plan.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[900],
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withOpacity(0.6),
-                          Colors.transparent,
-                        ],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.black, Colors.transparent],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        bottom: 16,
+                        left: 16,
+                        right: 16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${plan.duration} Days",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              plan.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Level: ${plan.level}",
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.blueAccent,
+                              ),
+                              child: const Text(
+                                'Start',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          mockData[index]['days']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          mockData[index]['title']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          mockData[index]['desc']!,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.blueAccent[400],
-                          ),
-                          child: const Text(
-                            'Start',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
+
 
   Widget _buildWorkoutCategoryFilter() {
     return Container(
