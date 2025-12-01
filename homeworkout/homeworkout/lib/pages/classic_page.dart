@@ -91,7 +91,7 @@ class _ClassicPageState extends State<ClassicPage> {
 
   Widget _buildCustomNavbar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

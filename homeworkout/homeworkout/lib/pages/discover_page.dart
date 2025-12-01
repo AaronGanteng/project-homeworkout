@@ -169,7 +169,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
             child: Container(
               width: 70, // Diameter lingkaran (2 x radius 35)
               height: 70,
-              color: Colors.grey[900], // Warna background jika gambar transparan/loading
+              color: Colors.black, // Warna background jika gambar transparan/loading
               child: Image.asset(
                 imagePath,
                 fit: BoxFit.cover, // <-- INI KUNCINYA (Supaya full cover)
@@ -178,7 +178,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   return const Icon(
                     Icons.fitness_center,
                     color: Colors.blue,
-                    size: 32,
+                    size: 65,
                   );
                 },
               ),

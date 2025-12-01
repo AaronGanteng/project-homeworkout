@@ -8,17 +8,125 @@ class PersonalPage extends StatefulWidget {
   State<PersonalPage> createState() => _PersonalPageState();
 }
 
-class _PersonalPageState extends State<PersonalPage> {
+class _PersonalPageState extends State<PersonalPage> with AutomaticKeepAliveClientMixin {
   int _selectedDay = 1;
-
   final dbHelper = DatabaseHelper();
+
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _keys = {};
+  bool _isFabVisible = false; // State untuk menyembunyikan/menampilkan tombol
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_checkVisibility);
+
+    // Cek visibilitas awal setelah frame pertama selesai dirender
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkVisibility());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_checkVisibility);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Helper untuk mendapatkan atau membuat key
+  GlobalKey _getKey(int day) {
+    if (!_keys.containsKey(day)) {
+      _keys[day] = GlobalKey();
+    }
+    return _keys[day]!;
+  }
+
+  void _checkVisibility() {
+    // Ambil key dari hari yang sedang aktif
+    final key = _keys[_selectedDay];
+
+    if (key?.currentContext == null) return;
+
+    final RenderBox? renderBox = key!.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final position = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+
+    // Dimensi layar (area aman)
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight;
+    // Tambah sedikit buffer (misal 50px) agar tombol muncul sebelum kartu benar-benar hilang total
+    final bottomPadding = kBottomNavigationBarHeight + 20;
+
+    // LOGIKA BARU YANG LEBIH SIMPEL:
+    // Kartu dianggap "Tidak Terlihat" jika:
+    // 1. Bagian bawah kartu ada di atas area pandang (Sudah lewat ke atas)
+    // 2. Bagian atas kartu ada di bawah area pandang (Belum muncul di bawah)
+
+    bool isScrolledPast = (position.dy + size.height) < topPadding;
+    bool isBelowScreen = position.dy > (screenHeight - bottomPadding);
+
+    bool shouldShowFab = isScrolledPast || isBelowScreen;
+
+    if (_isFabVisible != shouldShowFab) {
+      setState(() {
+        _isFabVisible = shouldShowFab;
+      });
+    }
+  }
+
+  void _scrollToActiveCard() {
+    final key = _keys[_selectedDay];
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.5, // Tengah layar
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return Scaffold(
       backgroundColor: Colors.black,
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: AnimatedSlide(
+        duration: const Duration(milliseconds: 200),
+        offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: _isFabVisible ? 1.0 : 0.0,
+          child: _isFabVisible // Cegah klik saat hidden
+              ? FloatingActionButton.extended(
+            onPressed: _scrollToActiveCard,
+            backgroundColor: Colors.blue,
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30), // Atur radius di sini
+            ),
+            label: Row(
+              children: [
+                // Icon panah dinamis (Atas/Bawah) bisa ditambahkan nanti,
+                // sekarang kita pakai ikon target/lokasi agar netral
+                Text("Back to Day $_selectedDay", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
+              ],
+            ),
+          )
+              : const SizedBox.shrink(),
+        ),
+      ),
+
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _scrollController,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,13 +141,13 @@ class _PersonalPageState extends State<PersonalPage> {
               ),
               const SizedBox(height: 16),
 
-              _buildDayRow(day: 1, isFirst: true),
-              _buildDayRow(day: 2),
-              _buildDayRow(day: 3),
-              _buildDayRow(day: 4),
-              _buildDayRow(day: 5),
-              _buildDayRow(day: 6),
-              _buildDayRow(day: 7, isLast: true),
+              _buildDayRow(day: 1, min: 5, kcal: 79, isFirst: true),
+              _buildDayRow(day: 2, min: 5, kcal: 79),
+              _buildDayRow(day: 3, min: 5, kcal: 79),
+              _buildDayRow(day: 4, min: 6, kcal: 89),
+              _buildDayRow(day: 5, min: 6, kcal: 89),
+              _buildDayRow(day: 6, min: 6, kcal: 89),
+              _buildDayRow(day: 7, min: 6, kcal: 89, isLast: true),
 
               const SizedBox(height: 32),
 
@@ -51,7 +159,47 @@ class _PersonalPageState extends State<PersonalPage> {
               ),
               const SizedBox(height: 16),
 
-              _buildDayRow(day: 8, isFirst: true, isLast: true),
+              _buildDayRow(day: 8, min: 6, kcal: 89, isFirst: true),
+              _buildDayRow(day: 9, min: 7, kcal: 100),
+              _buildDayRow(day: 10, min: 7, kcal: 100),
+              _buildDayRow(day: 11, min: 7, kcal: 100),
+              _buildDayRow(day: 12, min: 7, kcal: 100),
+              _buildDayRow(day: 13, min: 8, kcal: 121),
+              _buildDayRow(day: 14, min: 8, kcal: 121, isLast: true),
+
+              const SizedBox(height: 32),
+
+              // -- STAGE 3  --
+              _buildStageHeader(
+                stageNum: 3,
+                title: "Bulk & Power Up",
+                progress: "0/7",
+              ),
+              const SizedBox(height: 16),
+
+              _buildDayRow(day: 15, min: 8, kcal: 121, isFirst: true),
+              _buildDayRow(day: 16, min: 8, kcal: 121),
+              _buildDayRow(day: 17, min: 8, kcal: 135),
+              _buildDayRow(day: 18, min: 8, kcal: 135),
+              _buildDayRow(day: 19, min: 8, kcal: 135),
+              _buildDayRow(day: 20, min: 8, kcal: 135),
+              _buildDayRow(day: 21, min: 8, kcal: 135, isLast: true),
+
+              // -- STAGE 4  --
+              _buildStageHeader(
+                stageNum: 3,
+                title: "Legendary Muscle Mass",
+                progress: "0/7",
+              ),
+              const SizedBox(height: 16),
+
+              _buildDayRow(day: 22, min: 8, kcal: 135, isFirst: true),
+              _buildDayRow(day: 23, min: 8, kcal: 135),
+              _buildDayRow(day: 24, min: 8, kcal: 135),
+              _buildDayRow(day: 25, min: 9, kcal: 153),
+              _buildDayRow(day: 26, min: 9, kcal: 153),
+              _buildDayRow(day: 27, min: 9, kcal: 153),
+              _buildDayRow(day: 28, min: 9, kcal: 153, isLast: true),
             ],
           ),
         ),
@@ -62,6 +210,8 @@ class _PersonalPageState extends State<PersonalPage> {
   // --- HELPER BARU: Menggabungkan Logika Timeline + Pilihan Kartu ---
   Widget _buildDayRow({
     required int day,
+    required int min,
+    required int kcal,
     bool isFirst = false,
     bool isLast = false,
   }) {
@@ -77,9 +227,11 @@ class _PersonalPageState extends State<PersonalPage> {
           setState(() {
             _selectedDay = day;
           });
+          WidgetsBinding.instance.addPostFrameCallback((_) => _checkVisibility());
         },
         // Container Luar yang Beranimasi (Warna & Ukuran)
         child: AnimatedContainer(
+          key: _getKey(day),
           duration: const Duration(milliseconds: 400),
           // Durasi animasi
           curve: Curves.easeInOut,
@@ -119,8 +271,8 @@ class _PersonalPageState extends State<PersonalPage> {
             // KONTEN KARTU
             // Gunakan 'key' yang berbeda agar Flutter tahu ini widget beda
             child: isSelected
-                ? _buildActiveContent(day) // Tampilan Besar (Putih)
-                : _buildInactiveContent(day), // Tampilan Kecil (Gelap)
+                ? _buildActiveContent(day, min, kcal) // Tampilan Besar (Putih)
+                : _buildInactiveContent(day, min, kcal), // Tampilan Kecil (Gelap)
           ),
         ),
       ),
@@ -128,7 +280,7 @@ class _PersonalPageState extends State<PersonalPage> {
   }
 
   // ISI KONTEN SAAT AKTIF (Besar)
-  Widget _buildActiveContent(int day) {
+  Widget _buildActiveContent(int day, int min, int kcal) {
     return Column(
       key: ValueKey('active-$day'), // Key penting untuk animasi!
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,11 +297,11 @@ class _PersonalPageState extends State<PersonalPage> {
         const SizedBox(height: 12),
         Row(
           children: [
-            _buildTag(Icons.timer, "5 mins", isLightMode: true),
+            _buildTag(Icons.timer, "$min mins", isLightMode: true),
             const SizedBox(width: 8),
             _buildTag(
               Icons.local_fire_department,
-              "79 kcal",
+              "$kcal kcal",
               isLightMode: true,
             ),
           ],
@@ -162,8 +314,8 @@ class _PersonalPageState extends State<PersonalPage> {
               // 1. Bersihkan string angka (hapus tulisan "mins" dan "kcal")
               // Contoh: "5 mins" -> "5" -> 5
               // RegExp(r'[^0-9]') artinya "hapus semua karakter yang BUKAN angka 0-9"
-              int duration = 30;
-              int calories = 50;
+              int duration = min;
+              int calories = kcal;
 
               // 2. Siapkan data map untuk SQFlite
               Map<String, dynamic> row = {
@@ -185,7 +337,7 @@ class _PersonalPageState extends State<PersonalPage> {
                     content: Text(
                       "Latihan Day $day selesai & tersimpan!",
                     ),
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.blue,
                     behavior: SnackBarBehavior.floating,
                     // Tampil melayang lebih keren
                     margin: const EdgeInsets.all(16),
@@ -214,7 +366,7 @@ class _PersonalPageState extends State<PersonalPage> {
   }
 
   // ISI KONTEN SAAT TIDAK AKTIF (Kecil)
-  Widget _buildInactiveContent(int day) {
+  Widget _buildInactiveContent(int day, int min, int kcal) {
     return Row(
       key: ValueKey('inactive-$day'), // Key penting untuk animasi!
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -232,7 +384,7 @@ class _PersonalPageState extends State<PersonalPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              "5 mins | 79 kcal",
+              "$min mins | $kcal kcal",
               style: TextStyle(color: Colors.grey[500], fontSize: 14),
             ),
           ],
@@ -253,7 +405,7 @@ class _PersonalPageState extends State<PersonalPage> {
     );
   }
 
-  // 1. WIDGET HEADER
+  // WIDGET HEADER
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -288,7 +440,7 @@ class _PersonalPageState extends State<PersonalPage> {
     );
   }
 
-  // 3. WIDGET JUDUL STAGE
+  // WIDGET JUDUL STAGE
   Widget _buildStageHeader({
     required int stageNum,
     required String title,
@@ -319,7 +471,7 @@ class _PersonalPageState extends State<PersonalPage> {
     );
   }
 
-  // 4. WIDGET PEMBUNGKUS TIMELINE (Garis & Titik)
+  // WIDGET PEMBUNGKUS TIMELINE (Garis & Titik)
   Widget _buildTimelineItem({
     required Widget child,
     bool isActive = false,
@@ -373,122 +525,6 @@ class _PersonalPageState extends State<PersonalPage> {
           const SizedBox(width: 12), // Jarak ke kartu
           // Bagian Kanan: Isi Kartu
           Expanded(child: child),
-        ],
-      ),
-    );
-  }
-
-  // 5. KARTU BESAR (AKTIF/HARI INI)
-  Widget _buildBigActiveCard({
-    required String day,
-    required String mins,
-    required String kcal,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      height: 200,
-      // Sedikit lebih pendek karena tanpa gambar background
-      decoration: BoxDecoration(
-        color: Colors.white, // <-- BACKGROUND PUTIH
-        borderRadius: BorderRadius.circular(20),
-      ),
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 8),
-          Text(
-            "Day $day",
-            style: const TextStyle(
-              color: Colors.black, // <-- TEKS HITAM
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              // Menggunakan style tag khusus untuk background putih
-              _buildTag(Icons.timer, mins, isLightMode: true),
-              const SizedBox(width: 8),
-              _buildTag(Icons.local_fire_department, kcal, isLightMode: true),
-            ],
-          ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent, // Tombol tetap Biru
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text(
-                "Start Now",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 6. KARTU KECIL (COMING SOON)
-  Widget _buildSmallUpcomingCard({
-    required String day,
-    required String mins,
-    required String kcal,
-    required String imagePath,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900], // <-- KEMBALI KE WARNA GELAP
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Day $day",
-                style: const TextStyle(
-                  color: Colors.white, // <-- Teks Putih
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "$mins | $kcal",
-                style: TextStyle(color: Colors.grey[500], fontSize: 14),
-              ),
-            ],
-          ),
-          // Gambar kecil di kanan (Kotak Abu-abu jika gambar error)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              imagePath,
-              width: 80,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  Container(width: 80, height: 60, color: Colors.grey[800]),
-            ),
-          ),
         ],
       ),
     );

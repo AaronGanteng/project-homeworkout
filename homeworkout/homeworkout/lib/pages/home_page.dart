@@ -19,7 +19,6 @@ class _HomePageState extends State<HomePage> {
     const ClassicPage(), // Halaman "Classic" (yang lama)
     const DiscoverPage(), // Halaman "Discover" (yang baru)
     const PersonalPage(), // Halaman "Personal"
-    const PlaceholderTab(title: 'Daily'), // Halaman "Daily"
     const ProfilePage(), // Halaman "Me"
   ];
 
@@ -27,7 +26,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _pages[_currentBottomNavIndex],
+      body: IndexedStack(
+        index: _currentBottomNavIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -59,10 +61,10 @@ class _HomePageState extends State<HomePage> {
           icon: Icon(Icons.person_pin),
           label: 'Personal',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Daily',
-        ),
+        // BottomNavigationBarItem(
+        //   icon: Icon(Icons.calendar_today),
+        //   label: 'Daily',
+        // ),
         BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Me'),
       ],
     );
