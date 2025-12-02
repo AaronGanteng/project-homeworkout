@@ -1,36 +1,53 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Workout {
   final String id;
   final String name;
   final String imageUrl;
   final List<String> bodyParts;
-  final List<String> keywords;
   final List<String> equipment;
-  final List<String> targetMuscles;
-  final List<String> secondaryMuscles;
 
+  // Field penting
+  final int duration;
+  final List<String> instructions;
+  final List<String> targetMuscles; // Ini untuk Focus Area
 
   Workout({
     required this.id,
     required this.name,
     required this.imageUrl,
     required this.bodyParts,
-    required this.keywords,
     required this.equipment,
-    required this.targetMuscles,
-    required this.secondaryMuscles,
+    this.duration = 30, // Request: Default 30 (Hardcode)
+    this.instructions = const [],
+    this.targetMuscles = const [],
   });
 
-  factory Workout.fromMap(String id, Map<String, dynamic> data) {
-    final bodyPartsFromData = data['bodyParts'] as List<dynamic>?;
+  factory Workout.fromSnapshot(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
     return Workout(
-      id: id,
-      name: data['name'] ?? '',
+      id: doc.id,
+      name: data['name'] ?? 'Unknown Workout',
       imageUrl: data['imageUrl'] ?? '',
-      bodyParts: bodyPartsFromData?.map((part) => part.toString().toUpperCase()).toList() ?? [],
-      keywords: data['keywords']?.cast<String>() ?? [],
-      equipment: data['equipment']?.cast<String>() ?? [],
-      targetMuscles: data['targetMuscles']?.cast<String>() ?? [],
-      secondaryMuscles: data['secondaryMuscles']?.cast<String>() ?? [],
+
+      // 1. DURATION: Tetap 30 (Hardcode sesuai request)
+      duration: 30,
+
+      // 2. INSTRUCTIONS: Dari Firebase
+      instructions: (data['instructions'] is List)
+          ? List<String>.from(data['instructions'])
+          : [],
+
+      // 3. TARGET MUSCLES: Dari Firebase (Penting untuk UI Focus Area)
+      // Pastikan di Firebase nama fieldnya 'targetMuscles' (array string)
+      targetMuscles: (data['targetMuscles'] is List)
+          ? List<String>.from(data['targetMuscles'])
+          : (data['bodyParts'] is List ? List<String>.from(data['bodyParts']) : []),
+      // Fallback ke bodyParts jika targetMuscles kosong
+
+      bodyParts: List<String>.from(data['bodyParts'] ?? []),
+      equipment: List<String>.from(data['equipments'] ?? []),
     );
   }
 }

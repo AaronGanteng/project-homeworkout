@@ -56,6 +56,7 @@ class _HomePageState extends State<HomePage> {
           icon: Icon(Icons.fitness_center),
           label: 'Classic',
         ),
+
         BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Discover'),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_pin),
